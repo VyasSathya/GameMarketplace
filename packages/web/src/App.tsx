@@ -47,6 +47,20 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Library state
+  const [library, setLibrary] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(true);
+
+  // Downloads state
+  const [downloads, setDownloads] = useState([]);
+  const [downloadsLoading, setDownloadsLoading] = useState(true);
+
+  // Friends state
+  const [friends, setFriends] = useState([]);
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [suggestedFriends, setSuggestedFriends] = useState([]);
+  const [friendsActiveTab, setFriendsActiveTab] = useState('friends');
+
   // Check for existing session on load
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -250,71 +264,236 @@ const App: React.FC = () => {
     </section>
   );
 
-  const renderLibraryView = () => {
-    const [library, setLibrary] = React.useState([]);
-    const [loading, setLoading] = React.useState(true);
-
-    React.useEffect(() => {
-      const fetchLibrary = async () => {
-        try {
-          // Mock library data since we don't have user auth yet
-          const mockLibrary = [
-            {
-              license: {
-                id: '1',
-                purchaseDate: '2024-01-20T15:30:00Z',
-                totalPlaytimeMinutes: 245,
-                lastPlayed: '2024-08-08T20:15:00Z'
-              },
-              game: {
-                id: '650e8400-e29b-41d4-a716-446655440001',
-                title: 'Bitcoin Miner Simulator',
-                developer: 'Satoshi Studios',
-                header_image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800',
-                genres: ['Simulation', 'Strategy']
-              }
+  // Load library data
+  useEffect(() => {
+    const fetchLibrary = async () => {
+      try {
+        // Mock library data since we don't have user auth yet
+        const mockLibrary = [
+          {
+            license: {
+              id: '1',
+              purchaseDate: '2024-01-20T15:30:00Z',
+              totalPlaytimeMinutes: 245,
+              lastPlayed: '2024-08-08T20:15:00Z'
             },
-            {
-              license: {
-                id: '2',
-                purchaseDate: '2024-02-05T12:45:00Z',
-                totalPlaytimeMinutes: 180,
-                lastPlayed: '2024-08-07T18:30:00Z'
-              },
-              game: {
-                id: '650e8400-e29b-41d4-a716-446655440002',
-                title: 'Lightning Network Adventure',
-                developer: 'Channel Games',
-                header_image: 'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=800',
-                genres: ['Action', 'Adventure']
-              }
-            },
-            {
-              license: {
-                id: '3',
-                purchaseDate: '2024-03-10T09:20:00Z',
-                totalPlaytimeMinutes: 120,
-                lastPlayed: '2024-08-06T14:20:00Z'
-              },
-              game: {
-                id: '650e8400-e29b-41d4-a716-446655440004',
-                title: 'Satoshi\'s Quest',
-                developer: 'Indie Lightning',
-                header_image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800',
-                genres: ['RPG', 'Adventure']
-              }
+            game: {
+              id: '650e8400-e29b-41d4-a716-446655440001',
+              title: 'Bitcoin Miner Simulator',
+              developer: 'Satoshi Studios',
+              header_image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800',
+              genres: ['Simulation', 'Strategy']
             }
-          ];
-          setLibrary(mockLibrary);
-        } catch (error) {
-          console.error('Failed to fetch library:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
+          },
+          {
+            license: {
+              id: '2',
+              purchaseDate: '2024-02-05T12:45:00Z',
+              totalPlaytimeMinutes: 180,
+              lastPlayed: '2024-08-07T18:30:00Z'
+            },
+            game: {
+              id: '650e8400-e29b-41d4-a716-446655440002',
+              title: 'Lightning Network Adventure',
+              developer: 'Channel Games',
+              header_image: 'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=800',
+              genres: ['Action', 'Adventure']
+            }
+          },
+          {
+            license: {
+              id: '3',
+              purchaseDate: '2024-03-10T09:20:00Z',
+              totalPlaytimeMinutes: 120,
+              lastPlayed: '2024-08-06T14:20:00Z'
+            },
+            game: {
+              id: '650e8400-e29b-41d4-a716-446655440004',
+              title: 'Satoshi\'s Quest',
+              developer: 'Indie Lightning',
+              header_image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800',
+              genres: ['RPG', 'Adventure']
+            }
+          }
+        ];
+        setLibrary(mockLibrary);
+      } catch (error) {
+        console.error('Failed to fetch library:', error);
+      } finally {
+        setLibraryLoading(false);
+      }
+    };
 
+    if (activeView === 'library') {
       fetchLibrary();
-    }, []);
+    }
+  }, [activeView]);
+
+  // Load downloads data
+  useEffect(() => {
+    const fetchDownloads = async () => {
+      try {
+        // Mock downloads data for now
+        const mockDownloads = [
+          {
+            id: '1',
+            status: 'downloading',
+            progress_percent: 75,
+            download_speed_mbps: 12.5,
+            downloaded_mb: 900,
+            total_mb: 1200,
+            eta_minutes: 2,
+            games: {
+              id: '650e8400-e29b-41d4-a716-446655440005',
+              title: 'DeFi Defense',
+              developer: 'Crypto Entertainment',
+              header_image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800'
+            }
+          },
+          {
+            id: '2',
+            status: 'completed',
+            progress_percent: 100,
+            download_speed_mbps: 0,
+            downloaded_mb: 5800,
+            total_mb: 5800,
+            eta_minutes: 0,
+            games: {
+              id: '650e8400-e29b-41d4-a716-446655440006',
+              title: 'Blockchain Builder',
+              developer: 'Satoshi Studios',
+              header_image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800'
+            }
+          },
+          {
+            id: '3',
+            status: 'paused',
+            progress_percent: 45,
+            download_speed_mbps: 0,
+            downloaded_mb: 1260,
+            total_mb: 2800,
+            eta_minutes: null,
+            games: {
+              id: '650e8400-e29b-41d4-a716-446655440007',
+              title: 'Hash Wars',
+              developer: 'Blockchain Studios',
+              header_image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800'
+            }
+          },
+          {
+            id: '4',
+            status: 'downloading',
+            progress_percent: 23,
+            download_speed_mbps: 8.7,
+            downloaded_mb: 437,
+            total_mb: 1900,
+            eta_minutes: 15,
+            games: {
+              id: '650e8400-e29b-41d4-a716-446655440008',
+              title: 'Lightning Racer',
+              developer: 'Channel Games',
+              header_image: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800'
+            }
+          }
+        ];
+        setDownloads(mockDownloads);
+      } catch (error) {
+        console.error('Failed to fetch downloads:', error);
+      } finally {
+        setDownloadsLoading(false);
+      }
+    };
+
+    if (activeView === 'downloads') {
+      fetchDownloads();
+    }
+  }, [activeView]);
+
+  // Load friends data
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        // Mock friends data
+        const mockFriends = [
+          {
+            id: '1',
+            username: 'alice_gamer',
+            displayName: 'Alice Cooper',
+            avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100',
+            status: 'online',
+            currentGame: 'Bitcoin Miner Simulator',
+            level: 15,
+            lastSeen: null
+          },
+          {
+            id: '2',
+            username: 'david_pro',
+            displayName: 'David Wilson',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+            status: 'in-game',
+            currentGame: 'Lightning Network Adventure',
+            level: 22,
+            lastSeen: null
+          },
+          {
+            id: '3',
+            username: 'frank_casual',
+            displayName: 'Frank Brown',
+            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+            status: 'offline',
+            currentGame: null,
+            level: 7,
+            lastSeen: '2 hours ago'
+          }
+        ];
+
+        const mockRequests = [
+          {
+            id: '4',
+            username: 'eve_indie',
+            displayName: 'Eve Martinez',
+            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
+            level: 5,
+            mutualFriends: 2,
+            requestDate: '2024-08-09T10:30:00Z'
+          }
+        ];
+
+        const mockSuggested = [
+          {
+            id: '5',
+            username: 'bob_dev',
+            displayName: 'Bob Smith',
+            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
+            level: 8,
+            mutualFriends: 1,
+            reason: 'Plays similar games'
+          },
+          {
+            id: '6',
+            username: 'carol_pub',
+            displayName: 'Carol Johnson',
+            avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
+            level: 12,
+            mutualFriends: 3,
+            reason: 'In your community'
+          }
+        ];
+
+        setFriends(mockFriends);
+        setFriendRequests(mockRequests);
+        setSuggestedFriends(mockSuggested);
+      } catch (error) {
+        console.error('Failed to fetch friends:', error);
+      }
+    };
+
+    if (activeView === 'friends') {
+      fetchFriends();
+    }
+  }, [activeView]);
+
+  const renderLibraryView = () => {
 
     const formatPlaytime = (minutes) => {
       const hours = Math.floor(minutes / 60);
@@ -347,7 +526,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {loading ? (
+          {libraryLoading ? (
             <div className="loading">
               <div className="loading-spinner"></div>
               <p>Loading library...</p>
@@ -404,26 +583,6 @@ const App: React.FC = () => {
   };
 
   const renderDownloadsView = () => {
-    const [downloads, setDownloads] = React.useState([]);
-    const [loading, setLoading] = React.useState(true);
-
-    React.useEffect(() => {
-      const fetchDownloads = async () => {
-        try {
-          const response = await fetch('/api/downloads');
-          if (response.ok) {
-            const data = await response.json();
-            setDownloads(data.downloads || []);
-          }
-        } catch (error) {
-          console.error('Failed to fetch downloads:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchDownloads();
-    }, []);
 
     const handlePause = (id: string) => {
       setDownloads(prev => prev.map(download =>
@@ -467,7 +626,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {loading ? (
+          {downloadsLoading ? (
             <div className="loading">
               <div className="loading-spinner"></div>
               <p>Loading downloads...</p>
@@ -543,14 +702,219 @@ const App: React.FC = () => {
     </section>
   );
 
-  const renderFriendsView = () => (
-    <section className="view active">
-      <div className="container-block">
-        <h2>Friends</h2>
-        <p>Chat and play with friends</p>
-      </div>
-    </section>
-  );
+  const renderFriendsView = () => {
+
+    const handleAddFriend = (userId: string) => {
+      const user = suggestedFriends.find(f => f.id === userId);
+      if (user) {
+        setSuggestedFriends(prev => prev.filter(f => f.id !== userId));
+        console.log('Friend request sent to', user.displayName);
+      }
+    };
+
+    const handleAcceptRequest = (userId: string) => {
+      const user = friendRequests.find(f => f.id === userId);
+      if (user) {
+        setFriendRequests(prev => prev.filter(f => f.id !== userId));
+        setFriends(prev => [...prev, {
+          ...user,
+          status: 'offline',
+          currentGame: null,
+          lastSeen: 'Just added'
+        }]);
+      }
+    };
+
+    const handleDeclineRequest = (userId: string) => {
+      setFriendRequests(prev => prev.filter(f => f.id !== userId));
+    };
+
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'online': return '#10b981';
+        case 'in-game': return '#3b82f6';
+        case 'away': return '#f59e0b';
+        default: return '#6b7280';
+      }
+    };
+
+    return (
+      <section className="view active">
+        <div className="container-block">
+          <div className="friends-header">
+            <div>
+              <h2>Friends & Community</h2>
+              <p>Connect with other Bitcoin gamers</p>
+            </div>
+            <div className="friends-stats">
+              <div className="stat-item">
+                <Users size={16} />
+                <span>{friends.length} Friends</span>
+              </div>
+              <div className="stat-item">
+                <span>{friends.filter(f => f.status === 'online' || f.status === 'in-game').length} Online</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="friends-tabs">
+            {[
+              { id: 'friends', label: 'Friends', count: friends.length },
+              { id: 'requests', label: 'Requests', count: friendRequests.length },
+              { id: 'suggested', label: 'Suggested', count: suggestedFriends.length }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setFriendsActiveTab(tab.id)}
+                className={`friends-tab ${friendsActiveTab === tab.id ? 'active' : ''}`}
+              >
+                {tab.label}
+                {tab.count > 0 && <span className="tab-count">{tab.count}</span>}
+              </button>
+            ))}
+          </div>
+
+          <div className="friends-content">
+            {friendsActiveTab === 'friends' && (
+              <div className="friends-list">
+                {friends.length === 0 ? (
+                  <div className="empty-state">
+                    <Users size={48} />
+                    <h3>No Friends Yet</h3>
+                    <p>Add friends to see their gaming activity</p>
+                  </div>
+                ) : (
+                  friends.map(friend => (
+                    <div key={friend.id} className="friend-card">
+                      <div className="friend-avatar">
+                        <img src={friend.avatar} alt={friend.displayName} />
+                        <div
+                          className="status-indicator"
+                          style={{ backgroundColor: getStatusColor(friend.status) }}
+                        />
+                      </div>
+                      <div className="friend-info">
+                        <div className="friend-name">
+                          <h4>{friend.displayName}</h4>
+                          <span className="username">@{friend.username}</span>
+                        </div>
+                        <div className="friend-status">
+                          {friend.status === 'online' && <span className="status online">Online</span>}
+                          {friend.status === 'in-game' && (
+                            <span className="status in-game">
+                              Playing {friend.currentGame}
+                            </span>
+                          )}
+                          {friend.status === 'offline' && (
+                            <span className="status offline">
+                              Last seen {friend.lastSeen}
+                            </span>
+                          )}
+                        </div>
+                        <div className="friend-level">Level {friend.level}</div>
+                      </div>
+                      <div className="friend-actions">
+                        <button className="action-btn">
+                          <MessageCircle size={16} />
+                        </button>
+                        <button className="action-btn">
+                          <User size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {friendsActiveTab === 'requests' && (
+              <div className="requests-list">
+                {friendRequests.length === 0 ? (
+                  <div className="empty-state">
+                    <Bell size={48} />
+                    <h3>No Friend Requests</h3>
+                    <p>Friend requests will appear here</p>
+                  </div>
+                ) : (
+                  friendRequests.map(request => (
+                    <div key={request.id} className="request-card">
+                      <div className="request-avatar">
+                        <img src={request.avatar} alt={request.displayName} />
+                      </div>
+                      <div className="request-info">
+                        <h4>{request.displayName}</h4>
+                        <span className="username">@{request.username}</span>
+                        <div className="request-details">
+                          <span>Level {request.level}</span>
+                          {request.mutualFriends > 0 && (
+                            <span>{request.mutualFriends} mutual friends</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="request-actions">
+                        <button
+                          className="accept-btn"
+                          onClick={() => handleAcceptRequest(request.id)}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="decline-btn"
+                          onClick={() => handleDeclineRequest(request.id)}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {friendsActiveTab === 'suggested' && (
+              <div className="suggested-list">
+                {suggestedFriends.length === 0 ? (
+                  <div className="empty-state">
+                    <Search size={48} />
+                    <h3>No Suggestions</h3>
+                    <p>We'll suggest friends based on your activity</p>
+                  </div>
+                ) : (
+                  suggestedFriends.map(suggestion => (
+                    <div key={suggestion.id} className="suggestion-card">
+                      <div className="suggestion-avatar">
+                        <img src={suggestion.avatar} alt={suggestion.displayName} />
+                      </div>
+                      <div className="suggestion-info">
+                        <h4>{suggestion.displayName}</h4>
+                        <span className="username">@{suggestion.username}</span>
+                        <div className="suggestion-details">
+                          <span>Level {suggestion.level}</span>
+                          <span className="suggestion-reason">{suggestion.reason}</span>
+                          {suggestion.mutualFriends > 0 && (
+                            <span>{suggestion.mutualFriends} mutual friends</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="suggestion-actions">
+                        <button
+                          className="add-friend-btn"
+                          onClick={() => handleAddFriend(suggestion.id)}
+                        >
+                          <User size={16} />
+                          Add Friend
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const renderSettingsView = () => (
     <section className="view active">
@@ -662,16 +1026,25 @@ const App: React.FC = () => {
   );
 };
 
-// Simple Auth Modal Component
+// Enhanced Auth Modal Component with Steam-like flow
 const AuthModal: React.FC<{ onAuth: any; onClose: () => void }> = ({ onAuth, onClose }) => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [currentStep, setCurrentStep] = useState<'login' | 'register' | 'developer-setup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     username: '',
-    displayName: ''
+    displayName: '',
+    accountType: 'player',
+    // Developer fields
+    companyName: '',
+    companyWebsite: '',
+    businessAddress: '',
+    taxId: '',
+    bitcoinAddress: '',
+    agreeToTerms: false,
+    agreeToFee: false
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -679,7 +1052,14 @@ const AuthModal: React.FC<{ onAuth: any; onClose: () => void }> = ({ onAuth, onC
     setLoading(true);
     setError('');
 
-    const result = await onAuth(formData, isLogin);
+    if (currentStep === 'register' && formData.accountType === 'developer') {
+      // Move to developer setup step
+      setCurrentStep('developer-setup');
+      setLoading(false);
+      return;
+    }
+
+    const result = await onAuth(formData, currentStep === 'login');
 
     if (!result.success) {
       setError(result.error);
@@ -688,59 +1068,260 @@ const AuthModal: React.FC<{ onAuth: any; onClose: () => void }> = ({ onAuth, onC
     setLoading(false);
   };
 
+  const handleDeveloperSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.agreeToTerms || !formData.agreeToFee) {
+      setError('You must agree to the terms and developer fee');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    const result = await onAuth(formData, false);
+
+    if (!result.success) {
+      setError(result.error);
+    }
+
+    setLoading(false);
+  };
+
+  const renderLoginForm = () => (
+    <form onSubmit={handleSubmit} className="auth-form">
+      <input
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) => setFormData({...formData, email: e.target.value})}
+        required
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={formData.password}
+        onChange={(e) => setFormData({...formData, password: e.target.value})}
+        required
+      />
+
+      {error && <div className="auth-error">{error}</div>}
+
+      <button type="submit" disabled={loading} className="auth-submit">
+        {loading ? 'Signing In...' : 'Sign In'}
+      </button>
+
+      <button type="button" onClick={() => setCurrentStep('register')} className="auth-switch">
+        Need an account? Sign up
+      </button>
+    </form>
+  );
+
+  const renderRegisterForm = () => (
+    <form onSubmit={handleSubmit} className="auth-form">
+      <input
+        type="text"
+        placeholder="Username"
+        value={formData.username}
+        onChange={(e) => setFormData({...formData, username: e.target.value})}
+        required
+      />
+
+      <input
+        type="text"
+        placeholder="Display Name"
+        value={formData.displayName}
+        onChange={(e) => setFormData({...formData, displayName: e.target.value})}
+        required
+      />
+
+      <input
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) => setFormData({...formData, email: e.target.value})}
+        required
+      />
+
+      <input
+        type="password"
+        placeholder="Password (min 8 characters)"
+        value={formData.password}
+        onChange={(e) => setFormData({...formData, password: e.target.value})}
+        required
+        minLength={8}
+      />
+
+      <div className="account-type-selection">
+        <h4>Account Type</h4>
+        <div className="account-types">
+          <label className={`account-type ${formData.accountType === 'player' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name="accountType"
+              value="player"
+              checked={formData.accountType === 'player'}
+              onChange={(e) => setFormData({...formData, accountType: e.target.value})}
+            />
+            <div className="account-type-content">
+              <User size={24} />
+              <div>
+                <strong>Player Account</strong>
+                <p>Buy and play games, join communities</p>
+              </div>
+            </div>
+          </label>
+
+          <label className={`account-type ${formData.accountType === 'developer' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name="accountType"
+              value="developer"
+              checked={formData.accountType === 'developer'}
+              onChange={(e) => setFormData({...formData, accountType: e.target.value})}
+            />
+            <div className="account-type-content">
+              <Settings size={24} />
+              <div>
+                <strong>Developer Account</strong>
+                <p>Publish games, access developer tools</p>
+                <small>Requires $100 verification fee (in Bitcoin)</small>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {error && <div className="auth-error">{error}</div>}
+
+      <button type="submit" disabled={loading} className="auth-submit">
+        {loading ? 'Creating Account...' : 'Continue'}
+      </button>
+
+      <button type="button" onClick={() => setCurrentStep('login')} className="auth-switch">
+        Have an account? Sign in
+      </button>
+    </form>
+  );
+
+  const renderDeveloperSetup = () => (
+    <form onSubmit={handleDeveloperSubmit} className="auth-form developer-setup">
+      <div className="setup-header">
+        <h3>Developer Account Setup</h3>
+        <p>Complete your developer verification to publish games</p>
+      </div>
+
+      <div className="form-section">
+        <h4>Company Information</h4>
+        <input
+          type="text"
+          placeholder="Company/Studio Name"
+          value={formData.companyName}
+          onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+          required
+        />
+
+        <input
+          type="url"
+          placeholder="Company Website (optional)"
+          value={formData.companyWebsite}
+          onChange={(e) => setFormData({...formData, companyWebsite: e.target.value})}
+        />
+
+        <textarea
+          placeholder="Business Address"
+          value={formData.businessAddress}
+          onChange={(e) => setFormData({...formData, businessAddress: e.target.value})}
+          required
+          rows={3}
+        />
+
+        <input
+          type="text"
+          placeholder="Tax ID / Business Registration (optional)"
+          value={formData.taxId}
+          onChange={(e) => setFormData({...formData, taxId: e.target.value})}
+        />
+      </div>
+
+      <div className="form-section">
+        <h4>Bitcoin Payout Address</h4>
+        <input
+          type="text"
+          placeholder="Bitcoin Address for Revenue Payouts"
+          value={formData.bitcoinAddress}
+          onChange={(e) => setFormData({...formData, bitcoinAddress: e.target.value})}
+          required
+        />
+        <small>This is where you'll receive your revenue share (85% after platform fee)</small>
+      </div>
+
+      <div className="form-section">
+        <h4>Developer Agreement</h4>
+        <div className="fee-info">
+          <div className="fee-box">
+            <Bitcoin size={32} />
+            <div>
+              <strong>$100 USD Developer Fee</strong>
+              <p>One-time verification fee (equivalent in Bitcoin)</p>
+              <small>This fee helps prevent spam and ensures quality developers</small>
+            </div>
+          </div>
+        </div>
+
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={formData.agreeToTerms}
+            onChange={(e) => setFormData({...formData, agreeToTerms: e.target.checked})}
+            required
+          />
+          I agree to the Developer Terms of Service and Revenue Sharing Agreement
+        </label>
+
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={formData.agreeToFee}
+            onChange={(e) => setFormData({...formData, agreeToFee: e.target.checked})}
+            required
+          />
+          I understand and agree to pay the $100 USD developer verification fee
+        </label>
+      </div>
+
+      {error && <div className="auth-error">{error}</div>}
+
+      <button type="submit" disabled={loading || !formData.agreeToTerms || !formData.agreeToFee} className="auth-submit developer-submit">
+        {loading ? 'Creating Developer Account...' : 'Create Developer Account & Pay Fee'}
+      </button>
+
+      <button type="button" onClick={() => setCurrentStep('register')} className="auth-switch">
+        Back to Account Type
+      </button>
+    </form>
+  );
+
+  const getModalTitle = () => {
+    switch (currentStep) {
+      case 'login': return 'Sign In to GameMarketplace';
+      case 'register': return 'Create Your Account';
+      case 'developer-setup': return 'Developer Account Setup';
+      default: return 'Authentication';
+    }
+  };
+
   return (
     <div className="auth-modal">
       <div className="auth-header">
-        <h2>{isLogin ? 'Sign In' : 'Create Account'}</h2>
+        <h2>{getModalTitle()}</h2>
         <button className="close-btn" onClick={onClose}>×</button>
       </div>
 
-      <form onSubmit={handleSubmit} className="auth-form">
-        {!isLogin && (
-          <>
-            <input
-              type="text"
-              placeholder="Username"
-              value={formData.username}
-              onChange={(e) => setFormData({...formData, username: e.target.value})}
-              required
-            />
-            <input
-              type="text"
-              placeholder="Display Name"
-              value={formData.displayName}
-              onChange={(e) => setFormData({...formData, displayName: e.target.value})}
-              required
-            />
-          </>
-        )}
-
-        <input
-          type="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={(e) => setFormData({...formData, email: e.target.value})}
-          required
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={(e) => setFormData({...formData, password: e.target.value})}
-          required
-        />
-
-        {error && <div className="auth-error">{error}</div>}
-
-        <button type="submit" disabled={loading} className="auth-submit">
-          {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
-        </button>
-
-        <button type="button" onClick={() => setIsLogin(!isLogin)} className="auth-switch">
-          {isLogin ? 'Need an account? Sign up' : 'Have an account? Sign in'}
-        </button>
-      </form>
+      {currentStep === 'login' && renderLoginForm()}
+      {currentStep === 'register' && renderRegisterForm()}
+      {currentStep === 'developer-setup' && renderDeveloperSetup()}
     </div>
   );
 };
