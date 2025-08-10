@@ -4,10 +4,11 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
-// Import routes
+// Import routes and utilities
 import authRouter from './routes/auth';
 import developerRouter from './routes/developer';
 import libraryRouter from './routes/library';
+import { supabase } from './lib/supabase';
 
 // Load environment variables
 dotenv.config();
@@ -48,65 +49,54 @@ app.use('/api/auth', authRouter);
 app.use('/api/developer', developerRouter);
 app.use('/api/library', libraryRouter);
 
-// Games endpoint (simplified for now)
+// Games endpoint with real data from Supabase
 app.get('/api/games', async (req, res) => {
   try {
-    // Mock games data for now
-    const games = [
-      {
-        id: '1',
-        title: 'Bitcoin Miner Simulator',
-        developer: 'Satoshi Studios',
-        short_description: 'Build and manage your own Bitcoin mining operation in this realistic simulation game.',
-        price_usd: 29.99,
-        price_btc: 0.00075,
-        price_sats: 75000,
-        discount_percent: 0,
-        header_image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800',
-        genres: ['Simulation', 'Strategy'],
-        rating: 'E',
-        review_score: 8.5,
-        positive_reviews: 1250,
-        negative_reviews: 180
-      },
-      {
-        id: '2',
-        title: 'Lightning Network Adventure',
-        developer: 'Channel Games',
-        short_description: 'Navigate the Lightning Network in this fast-paced action-adventure game.',
-        price_usd: 19.99,
-        price_btc: 0.0005,
-        price_sats: 50000,
-        discount_percent: 25,
-        header_image: 'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=800',
-        genres: ['Action', 'Adventure'],
-        rating: 'T',
-        review_score: 9.2,
-        positive_reviews: 2100,
-        negative_reviews: 95
-      },
-      {
-        id: '3',
-        title: 'Crypto Trading Tycoon',
-        developer: 'Blockchain Studios',
-        short_description: 'Master the art of cryptocurrency trading in this comprehensive business simulation.',
-        price_usd: 39.99,
-        price_btc: 0.001,
-        price_sats: 100000,
-        discount_percent: 15,
-        header_image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
-        genres: ['Simulation', 'Strategy'],
-        rating: 'E',
-        review_score: 7.8,
-        positive_reviews: 890,
-        negative_reviews: 210
-      }
-    ];
+    const { data: games, error } = await supabase
+      .from('games')
+      .select(`
+        id, title, developer, publisher, short_description,
+        price_usd, price_btc, price_sats, discount_percent,
+        header_image, genres, rating, review_score,
+        positive_reviews, negative_reviews, release_date,
+        file_size, created_at
+      `)
+      .order('created_at', { ascending: false });
 
-    res.json({ games });
+    if (error) {
+      console.error('Games fetch error:', error);
+      return res.status(500).json({ error: 'Failed to fetch games' });
+    }
+
+    res.json({ games: games || [] });
   } catch (error) {
     console.error('Games fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch games' });
+  }
+});
+
+// Downloads endpoint
+app.get('/api/downloads', async (req, res) => {
+  try {
+    const { data: downloads, error } = await supabase
+      .from('game_downloads')
+      .select(`
+        *,
+        games (
+          id, title, developer, header_image
+        )
+      `)
+      .order('started_at', { ascending: false });
+
+    if (error) {
+      console.error('Downloads fetch error:', error);
+      return res.status(500).json({ error: 'Failed to fetch downloads' });
+    }
+
+    res.json({ downloads: downloads || [] });
+  } catch (error) {
+    console.error('Downloads fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch downloads' });
   }
 });
 
@@ -114,7 +104,7 @@ app.get('/api/games', async (req, res) => {
 app.post('/api/payments/invoice', async (req, res) => {
   try {
     const { gameId, method } = req.body;
-    
+
     // Mock invoice creation
     const invoice = {
       id: `inv_${Date.now()}`,
@@ -124,7 +114,7 @@ app.post('/api/payments/invoice', async (req, res) => {
       payment_request: 'lnbc500u1p...',
       expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
     };
-    
+
     res.json({ invoice });
   } catch (error) {
     console.error('Invoice creation error:', error);

@@ -14,7 +14,10 @@ import {
   User,
   Star,
   Bitcoin,
-  Zap
+  Zap,
+  Pause,
+  Play,
+  X
 } from 'lucide-react';
 
 interface Game {
@@ -247,23 +250,289 @@ const App: React.FC = () => {
     </section>
   );
 
-  const renderLibraryView = () => (
-    <section className="view active">
-      <div className="container-block">
-        <h2>Game Library</h2>
-        <p>Your Bitcoin-purchased games will appear here</p>
-      </div>
-    </section>
-  );
+  const renderLibraryView = () => {
+    const [library, setLibrary] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
 
-  const renderDownloadsView = () => (
-    <section className="view active">
-      <div className="container-block">
-        <h2>Downloads</h2>
-        <p>Manage your game downloads</p>
-      </div>
-    </section>
-  );
+    React.useEffect(() => {
+      const fetchLibrary = async () => {
+        try {
+          // Mock library data since we don't have user auth yet
+          const mockLibrary = [
+            {
+              license: {
+                id: '1',
+                purchaseDate: '2024-01-20T15:30:00Z',
+                totalPlaytimeMinutes: 245,
+                lastPlayed: '2024-08-08T20:15:00Z'
+              },
+              game: {
+                id: '650e8400-e29b-41d4-a716-446655440001',
+                title: 'Bitcoin Miner Simulator',
+                developer: 'Satoshi Studios',
+                header_image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800',
+                genres: ['Simulation', 'Strategy']
+              }
+            },
+            {
+              license: {
+                id: '2',
+                purchaseDate: '2024-02-05T12:45:00Z',
+                totalPlaytimeMinutes: 180,
+                lastPlayed: '2024-08-07T18:30:00Z'
+              },
+              game: {
+                id: '650e8400-e29b-41d4-a716-446655440002',
+                title: 'Lightning Network Adventure',
+                developer: 'Channel Games',
+                header_image: 'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=800',
+                genres: ['Action', 'Adventure']
+              }
+            },
+            {
+              license: {
+                id: '3',
+                purchaseDate: '2024-03-10T09:20:00Z',
+                totalPlaytimeMinutes: 120,
+                lastPlayed: '2024-08-06T14:20:00Z'
+              },
+              game: {
+                id: '650e8400-e29b-41d4-a716-446655440004',
+                title: 'Satoshi\'s Quest',
+                developer: 'Indie Lightning',
+                header_image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800',
+                genres: ['RPG', 'Adventure']
+              }
+            }
+          ];
+          setLibrary(mockLibrary);
+        } catch (error) {
+          console.error('Failed to fetch library:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchLibrary();
+    }, []);
+
+    const formatPlaytime = (minutes) => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      if (hours > 0) {
+        return `${hours}h ${mins}m`;
+      }
+      return `${mins}m`;
+    };
+
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString();
+    };
+
+    return (
+      <section className="view active">
+        <div className="container-block">
+          <div className="library-header">
+            <div>
+              <h2>Game Library</h2>
+              <p>Your Bitcoin-purchased games</p>
+            </div>
+            <div className="library-stats">
+              <div className="stat-item">
+                <span>{library.length} Games</span>
+              </div>
+              <div className="stat-item">
+                <span>{library.reduce((total, item) => total + item.license.totalPlaytimeMinutes, 0)} Total Minutes</span>
+              </div>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="loading">
+              <div className="loading-spinner"></div>
+              <p>Loading library...</p>
+            </div>
+          ) : library.length === 0 ? (
+            <div className="empty-state">
+              <Library size={48} />
+              <h3>No Games Yet</h3>
+              <p>Purchase games from the store to build your library</p>
+            </div>
+          ) : (
+            <div className="library-grid">
+              {library.map(item => (
+                <div key={item.license.id} className="library-item">
+                  <div className="library-image">
+                    <img src={item.game.header_image} alt={item.game.title} />
+                    <div className="library-overlay">
+                      <button className="play-btn">
+                        <Play size={20} />
+                        Play
+                      </button>
+                    </div>
+                  </div>
+                  <div className="library-info">
+                    <h3>{item.game.title}</h3>
+                    <p>{item.game.developer}</p>
+                    <div className="library-stats-item">
+                      <div className="stat">
+                        <span className="label">Playtime:</span>
+                        <span className="value">{formatPlaytime(item.license.totalPlaytimeMinutes)}</span>
+                      </div>
+                      <div className="stat">
+                        <span className="label">Last played:</span>
+                        <span className="value">{formatDate(item.license.lastPlayed)}</span>
+                      </div>
+                      <div className="stat">
+                        <span className="label">Purchased:</span>
+                        <span className="value">{formatDate(item.license.purchaseDate)}</span>
+                      </div>
+                    </div>
+                    <div className="library-genres">
+                      {item.game.genres.map(genre => (
+                        <span key={genre} className="genre-tag">{genre}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  const renderDownloadsView = () => {
+    const [downloads, setDownloads] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+      const fetchDownloads = async () => {
+        try {
+          const response = await fetch('/api/downloads');
+          if (response.ok) {
+            const data = await response.json();
+            setDownloads(data.downloads || []);
+          }
+        } catch (error) {
+          console.error('Failed to fetch downloads:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchDownloads();
+    }, []);
+
+    const handlePause = (id: string) => {
+      setDownloads(prev => prev.map(download =>
+        download.id === id
+          ? { ...download, status: 'paused', download_speed_mbps: 0, eta_minutes: null }
+          : download
+      ));
+    };
+
+    const handleResume = (id: string) => {
+      setDownloads(prev => prev.map(download =>
+        download.id === id
+          ? { ...download, status: 'downloading', download_speed_mbps: 12.5, eta_minutes: 5 }
+          : download
+      ));
+    };
+
+    const handleCancel = (id: string) => {
+      setDownloads(prev => prev.filter(download => download.id !== id));
+    };
+
+    const activeDownloads = downloads.filter(d => d.status === 'downloading');
+    const totalSpeed = activeDownloads.reduce((sum, d) => sum + (d.download_speed_mbps || 0), 0);
+
+    return (
+      <section className="view active">
+        <div className="container-block">
+          <div className="downloads-header">
+            <div className="downloads-title">
+              <h2>Downloads</h2>
+              <p>Manage your game downloads and installations</p>
+            </div>
+            <div className="downloads-stats">
+              <div className="stat-item">
+                <Download size={16} />
+                <span>Speed: {totalSpeed.toFixed(1)} MB/s</span>
+              </div>
+              <div className="stat-item">
+                <span>Free Space: 245 GB</span>
+              </div>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="loading">
+              <div className="loading-spinner"></div>
+              <p>Loading downloads...</p>
+            </div>
+          ) : downloads.length === 0 ? (
+            <div className="empty-state">
+              <Download size={48} />
+              <h3>No Downloads</h3>
+              <p>Your downloads will appear here</p>
+            </div>
+          ) : (
+            <div className="downloads-list">
+              {downloads.map(download => (
+                <div key={download.id} className="download-item">
+                  <div className="download-image">
+                    <img src={download.games?.header_image} alt={download.games?.title} />
+                  </div>
+                  <div className="download-info">
+                    <h3>{download.games?.title}</h3>
+                    <p>{download.games?.developer}</p>
+                    <div className="download-progress">
+                      <div className="progress-info">
+                        <span>{download.progress_percent}%</span>
+                        <span>{(download.downloaded_mb / 1024).toFixed(1)} GB / {(download.total_mb / 1024).toFixed(1)} GB</span>
+                      </div>
+                      <div className="progress-bar">
+                        <div
+                          className={`progress-fill ${download.status}`}
+                          style={{ width: `${download.progress_percent}%` }}
+                        />
+                      </div>
+                      <div className="download-status">
+                        {download.status === 'downloading' && (
+                          <span>{download.download_speed_mbps} MB/s • {download.eta_minutes} min remaining</span>
+                        )}
+                        {download.status === 'completed' && <span>Complete</span>}
+                        {download.status === 'paused' && <span>Paused</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="download-controls">
+                    {download.status === 'downloading' && (
+                      <button onClick={() => handlePause(download.id)} className="control-btn pause">
+                        <Pause size={16} />
+                      </button>
+                    )}
+                    {download.status === 'paused' && (
+                      <button onClick={() => handleResume(download.id)} className="control-btn resume">
+                        <Play size={16} />
+                      </button>
+                    )}
+                    {download.status !== 'completed' && (
+                      <button onClick={() => handleCancel(download.id)} className="control-btn cancel">
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
 
   const renderCommunityView = () => (
     <section className="view active">
