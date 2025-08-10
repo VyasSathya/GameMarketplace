@@ -17,8 +17,14 @@ import {
   Zap,
   Pause,
   Play,
-  X
+  X,
+  LogOut,
+  Sun,
+  Moon,
+  Plus
 } from 'lucide-react';
+import DeveloperOnboarding from './components/DeveloperOnboarding';
+import GamePublishingForm from './components/GamePublishingForm';
 
 interface Game {
   id: string;
@@ -46,6 +52,8 @@ const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDeveloperOnboarding, setShowDeveloperOnboarding] = useState(false);
+  const [showGamePublishing, setShowGamePublishing] = useState(false);
 
   // Library state
   const [library, setLibrary] = useState([]);
@@ -60,6 +68,47 @@ const App: React.FC = () => {
   const [friendRequests, setFriendRequests] = useState([]);
   const [suggestedFriends, setSuggestedFriends] = useState([]);
   const [friendsActiveTab, setFriendsActiveTab] = useState('friends');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Theme state
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved || 'dark';
+  });
+
+  // Theme switching
+  const toggleTheme = (newTheme?: string) => {
+    const nextTheme = newTheme || (theme === 'dark' ? 'light' : 'dark');
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
+
+  // Apply theme on load and changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // Check for existing auth token on app load
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token && !user) {
+      // Mock user data for demo - in real app, validate token with backend
+      const mockUser = {
+        id: '1',
+        email: 'demo@gamer.com',
+        username: 'demo_gamer',
+        displayName: 'Demo Gamer',
+        role: 'player',
+        verified: true,
+        profileLevel: 15,
+        token: token
+      };
+      setUser(mockUser);
+    }
+  }, []);
 
   // Check for existing session on load
   useEffect(() => {
@@ -81,33 +130,96 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleAuth = async (credentials: any, isLogin: boolean) => {
-    try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials)
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Authentication failed');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('auth_token', data.session.access_token);
-      setUser({ ...data.user, token: data.session.access_token });
-      setShowAuthModal(false);
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Authentication failed' };
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
     setUser(null);
+    setActiveView('store'); // Redirect to store
+  };
+
+  const handleDeveloperOnboardingComplete = async (applicationData: any) => {
+    try {
+      // Here we would submit the application to the API
+      console.log('Developer application submitted:', applicationData);
+
+      // For now, just close the modal and show success
+      setShowDeveloperOnboarding(false);
+
+      // You could also update the user's account type here
+      if (user) {
+        setUser({
+          ...user,
+          accountType: 'developer',
+          developerApplicationStatus: 'submitted'
+        });
+      }
+
+      alert('🎉 Developer application submitted successfully! We\'ll review it within 24-48 hours.');
+    } catch (error) {
+      console.error('Failed to submit developer application:', error);
+      alert('Failed to submit application. Please try again.');
+    }
+  };
+
+  const handleGamePublishingSubmit = async (gameData: any) => {
+    try {
+      // Here we would submit the game to the API
+      console.log('Game submitted:', gameData);
+
+      // For now, just close the modal and show success
+      setShowGamePublishing(false);
+
+      alert('🎉 Game submitted successfully! We\'ll review it and it should go live within 24 hours.');
+    } catch (error) {
+      console.error('Failed to submit game:', error);
+      alert('Failed to submit game. Please try again.');
+    }
+  };
+
+  const handleAuth = async (credentials: any, isLogin: boolean) => {
+    try {
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+
+      // For now, simulate successful auth with mock data
+      if (isLogin) {
+        // Mock login
+        if (credentials.email === 'demo@gamer.com' && credentials.password === 'password') {
+          const mockUser = {
+            id: '1',
+            email: 'demo@gamer.com',
+            username: 'demo_gamer',
+            displayName: 'Demo Gamer',
+            role: 'player',
+            verified: true,
+            profileLevel: 15,
+            token: 'mock_jwt_token'
+          };
+          localStorage.setItem('auth_token', mockUser.token);
+          setUser(mockUser);
+          setShowAuthModal(false);
+          return { success: true };
+        } else {
+          throw new Error('Invalid credentials. Try demo@gamer.com / password');
+        }
+      } else {
+        // Mock registration
+        const mockUser = {
+          id: Date.now().toString(),
+          email: credentials.email,
+          username: credentials.username,
+          displayName: credentials.displayName,
+          role: credentials.accountType,
+          verified: false,
+          profileLevel: 1,
+          token: 'mock_jwt_token_' + Date.now()
+        };
+        localStorage.setItem('auth_token', mockUser.token);
+        setUser(mockUser);
+        setShowAuthModal(false);
+        return { success: true };
+      }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Authentication failed' };
+    }
   };
 
   useEffect(() => {
@@ -116,6 +228,7 @@ const App: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        // Try API first, then fallback to direct Supabase
         let url = '/api/games';
         const params = new URLSearchParams();
 
@@ -128,12 +241,53 @@ const App: React.FC = () => {
 
         if (params.toString()) url += `?${params.toString()}`;
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch games');
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            setGames(data.games || []);
+            return;
+          }
+        } catch (apiError) {
+          console.log('API failed, trying direct Supabase connection...');
+        }
 
-        const data = await response.json();
-        setGames(data.games || []);
+        // Fallback: Direct Supabase query
+        let supabaseQuery = 'id,title,developer,publisher,price_usd,price_btc,price_sats,header_image,short_description,genres,rating,positive_reviews,negative_reviews,review_score,release_date,status';
+        let supabaseUrl = `https://uhgiaartjabgmjolksmb.supabase.co/rest/v1/games?select=${supabaseQuery}`;
+
+        // Add filtering based on active tab
+        if (activeStoreTab === 'new') {
+          supabaseUrl += '&order=release_date.desc';
+        } else if (activeStoreTab === 'topsellers') {
+          supabaseUrl += '&order=positive_reviews.desc';
+        } else if (activeStoreTab === 'specials') {
+          // For now, just show all games for specials
+          supabaseUrl += '&order=created_at.desc';
+        } else {
+          supabaseUrl += '&order=rating.desc';
+        }
+
+        if (searchQuery) {
+          supabaseUrl += `&or=(title.ilike.%25${encodeURIComponent(searchQuery)}%25,developer.ilike.%25${encodeURIComponent(searchQuery)}%25,short_description.ilike.%25${encodeURIComponent(searchQuery)}%25)`;
+        }
+
+        const supabaseResponse = await fetch(supabaseUrl, {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoZ2lhYXJ0amFiZ21qb2xrc21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4NzI4NzQsImV4cCI6MjA0OTQ0ODg3NH0.YOqzBJhEhCJhkJJkqJhkJhkJhkJhkJhkJhkJhkJhkJhk',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoZ2lhYXJ0amFiZ21qb2xrc21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4NzI4NzQsImV4cCI6MjA0OTQ0ODg3NH0.YOqzBJhEhCJhkJJkqJhkJhkJhkJhkJhkJhkJhkJhkJhk'
+          }
+        });
+
+        if (!supabaseResponse.ok) {
+          throw new Error(`Supabase error: ${supabaseResponse.status}`);
+        }
+
+        const supabaseData = await supabaseResponse.json();
+        setGames(supabaseData || []);
+
       } catch (err) {
+        console.error('Failed to fetch games:', err);
         setError(err instanceof Error ? err.message : 'Failed to load games');
         setGames([]);
       } finally {
@@ -329,76 +483,58 @@ const App: React.FC = () => {
     }
   }, [activeView]);
 
-  // Load downloads data
+  // Load downloads data from database
   useEffect(() => {
     const fetchDownloads = async () => {
       try {
-        // Mock downloads data for now
-        const mockDownloads = [
-          {
-            id: '1',
-            status: 'downloading',
-            progress_percent: 75,
-            download_speed_mbps: 12.5,
-            downloaded_mb: 900,
-            total_mb: 1200,
-            eta_minutes: 2,
-            games: {
-              id: '650e8400-e29b-41d4-a716-446655440005',
-              title: 'DeFi Defense',
-              developer: 'Crypto Entertainment',
-              header_image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800'
-            }
-          },
-          {
-            id: '2',
-            status: 'completed',
-            progress_percent: 100,
-            download_speed_mbps: 0,
-            downloaded_mb: 5800,
-            total_mb: 5800,
-            eta_minutes: 0,
-            games: {
-              id: '650e8400-e29b-41d4-a716-446655440006',
-              title: 'Blockchain Builder',
-              developer: 'Satoshi Studios',
-              header_image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800'
-            }
-          },
-          {
-            id: '3',
-            status: 'paused',
-            progress_percent: 45,
-            download_speed_mbps: 0,
-            downloaded_mb: 1260,
-            total_mb: 2800,
-            eta_minutes: null,
-            games: {
-              id: '650e8400-e29b-41d4-a716-446655440007',
-              title: 'Hash Wars',
-              developer: 'Blockchain Studios',
-              header_image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800'
-            }
-          },
-          {
-            id: '4',
-            status: 'downloading',
-            progress_percent: 23,
-            download_speed_mbps: 8.7,
-            downloaded_mb: 437,
-            total_mb: 1900,
-            eta_minutes: 15,
-            games: {
-              id: '650e8400-e29b-41d4-a716-446655440008',
-              title: 'Lightning Racer',
-              developer: 'Channel Games',
-              header_image: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800'
-            }
+        if (!user) {
+          setDownloads([]);
+          setDownloadsLoading(false);
+          return;
+        }
+
+        // Try API first, then fallback to direct Supabase
+        try {
+          const response = await fetch(`/api/downloads?user_id=${user.id}`, {
+            headers: { 'Authorization': `Bearer ${user.token}` }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setDownloads(data.downloads || []);
+            return;
           }
-        ];
-        setDownloads(mockDownloads);
+        } catch (apiError) {
+          console.log('Downloads API failed, trying direct Supabase...');
+        }
+
+        // Fallback: Direct Supabase query
+        const supabaseUrl = `https://uhgiaartjabgmjolksmb.supabase.co/rest/v1/downloads?select=*,games(id,title,developer,header_image)&user_id=eq.${user.id}&order=created_at.desc`;
+
+        const supabaseResponse = await fetch(supabaseUrl, {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoZ2lhYXJ0amFiZ21qb2xrc21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4NzI4NzQsImV4cCI6MjA0OTQ0ODg3NH0.YOqzBJhEhCJhkJJkqJhkJhkJhkJhkJhkJhkJhkJhkJhk',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoZ2lhYXJ0amFiZ21qb2xrc21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4NzI4NzQsImV4cCI6MjA0OTQ0ODg3NH0.YOqzBJhEhCJhkJJkqJhkJhkJhkJhkJhkJhkJhkJhkJhk'
+          }
+        });
+
+        if (supabaseResponse.ok) {
+          const supabaseData = await supabaseResponse.json();
+          // Transform data to match expected format
+          const transformedDownloads = supabaseData.map(download => ({
+            ...download,
+            download_speed_mbps: download.download_speed_bps ? (download.download_speed_bps / 1024 / 1024).toFixed(1) : 0,
+            downloaded_mb: download.bytes_downloaded ? (download.bytes_downloaded / 1024 / 1024).toFixed(0) : 0,
+            total_mb: download.bytes_total ? (download.bytes_total / 1024 / 1024).toFixed(0) : 0,
+            eta_minutes: download.eta_seconds ? Math.ceil(download.eta_seconds / 60) : null
+          }));
+          setDownloads(transformedDownloads);
+        } else {
+          throw new Error('Failed to fetch downloads from Supabase');
+        }
       } catch (error) {
         console.error('Failed to fetch downloads:', error);
+        setDownloads([]);
       } finally {
         setDownloadsLoading(false);
       }
@@ -407,93 +543,220 @@ const App: React.FC = () => {
     if (activeView === 'downloads') {
       fetchDownloads();
     }
-  }, [activeView]);
+  }, [activeView, user]);
 
-  // Load friends data
+  // Load friends data from database
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        // Mock friends data
-        const mockFriends = [
-          {
-            id: '1',
-            username: 'alice_gamer',
-            displayName: 'Alice Cooper',
-            avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100',
-            status: 'online',
-            currentGame: 'Bitcoin Miner Simulator',
-            level: 15,
-            lastSeen: null
-          },
-          {
-            id: '2',
-            username: 'david_pro',
-            displayName: 'David Wilson',
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-            status: 'in-game',
-            currentGame: 'Lightning Network Adventure',
-            level: 22,
-            lastSeen: null
-          },
-          {
-            id: '3',
-            username: 'frank_casual',
-            displayName: 'Frank Brown',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
-            status: 'offline',
-            currentGame: null,
-            level: 7,
-            lastSeen: '2 hours ago'
-          }
-        ];
+        if (!user) return;
 
-        const mockRequests = [
-          {
-            id: '4',
-            username: 'eve_indie',
-            displayName: 'Eve Martinez',
-            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-            level: 5,
-            mutualFriends: 2,
-            requestDate: '2024-08-09T10:30:00Z'
-          }
-        ];
+        // Fetch real friends from database
+        const friendsResponse = await fetch('/api/friends', {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
 
-        const mockSuggested = [
-          {
-            id: '5',
-            username: 'bob_dev',
-            displayName: 'Bob Smith',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-            level: 8,
-            mutualFriends: 1,
-            reason: 'Plays similar games'
-          },
-          {
-            id: '6',
-            username: 'carol_pub',
-            displayName: 'Carol Johnson',
-            avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
-            level: 12,
-            mutualFriends: 3,
-            reason: 'In your community'
-          }
-        ];
+        if (friendsResponse.ok) {
+          const friendsData = await friendsResponse.json();
+          setFriends(friendsData.friends || []);
+          setFriendRequests(friendsData.requests || []);
+          setSuggestedFriends(friendsData.suggested || []);
+        } else {
+          // Fallback to mock data for demo
+          const mockFriends = [
+            {
+              id: '550e8400-e29b-41d4-a716-446655440001',
+              username: 'alice_gamer',
+              display_name: 'Alice Cooper',
+              avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100',
+              status: 'offline',
+              profile_level: 15,
+              bio: 'Casual gamer who loves indie titles. Always looking for new adventures!',
+              location: 'Portland, OR'
+            },
+            {
+              id: '550e8400-e29b-41d4-a716-446655440004',
+              username: 'david_pro',
+              display_name: 'David Wilson',
+              avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+              status: 'offline',
+              profile_level: 22,
+              bio: 'Hardcore gamer and Bitcoin enthusiast. 890+ hours played this year!',
+              location: 'San Francisco, CA'
+            }
+          ];
 
-        setFriends(mockFriends);
-        setFriendRequests(mockRequests);
-        setSuggestedFriends(mockSuggested);
+          const mockRequests = [
+            {
+              id: '550e8400-e29b-41d4-a716-446655440005',
+              username: 'eve_indie',
+              display_name: 'Eve Martinez',
+              avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
+              profile_level: 5,
+              bio: 'Solo indie developer creating atmospheric puzzle games.',
+              location: 'Montreal, Canada',
+              mutualFriends: 2,
+              requestDate: '2024-08-09T10:30:00Z'
+            }
+          ];
+
+          const mockSuggested = [
+            {
+              id: '550e8400-e29b-41d4-a716-446655440002',
+              username: 'bob_dev',
+              display_name: 'Bob Smith',
+              avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+              profile_level: 8,
+              bio: 'Indie developer at Satoshi Studios. Working on Bitcoin-themed games.',
+              location: 'Austin, TX',
+              mutualFriends: 1,
+              reason: 'Plays similar games'
+            },
+            {
+              id: '550e8400-e29b-41d4-a716-446655440003',
+              username: 'carol_pub',
+              display_name: 'Carol Johnson',
+              avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
+              profile_level: 12,
+              bio: 'Publisher at Blockchain Games Inc. Helping indie devs reach their audience.',
+              location: 'New York, NY',
+              mutualFriends: 3,
+              reason: 'In your community'
+            }
+          ];
+
+          setFriends(mockFriends);
+          setFriendRequests(mockRequests);
+          setSuggestedFriends(mockSuggested);
+        }
       } catch (error) {
         console.error('Failed to fetch friends:', error);
       }
     };
 
-    if (activeView === 'friends') {
+    if (activeView === 'friends' && user) {
       fetchFriends();
     }
-  }, [activeView]);
+  }, [activeView, user]);
+
+  // User search functionality
+  const searchUsers = async (query: string) => {
+    if (!query.trim() || !user) {
+      setUserSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      // Try to search real database first
+      const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserSearchResults(data.users || []);
+      } else {
+        // Fallback to mock search for demo
+        const allUsers = [
+          {
+            id: '550e8400-e29b-41d4-a716-446655440001',
+            username: 'alice_gamer',
+            display_name: 'Alice Cooper',
+            avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100',
+            profile_level: 15,
+            bio: 'Casual gamer who loves indie titles. Always looking for new adventures!',
+            location: 'Portland, OR',
+            role: 'player'
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440002',
+            username: 'bob_dev',
+            display_name: 'Bob Smith',
+            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+            profile_level: 8,
+            bio: 'Indie developer at Satoshi Studios. Working on Bitcoin-themed games.',
+            location: 'Austin, TX',
+            role: 'developer'
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440003',
+            username: 'carol_pub',
+            display_name: 'Carol Johnson',
+            avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
+            profile_level: 12,
+            bio: 'Publisher at Blockchain Games Inc. Helping indie devs reach their audience.',
+            location: 'New York, NY',
+            role: 'publisher'
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440004',
+            username: 'david_pro',
+            display_name: 'David Wilson',
+            avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+            profile_level: 22,
+            bio: 'Hardcore gamer and Bitcoin enthusiast. 890+ hours played this year!',
+            location: 'San Francisco, CA',
+            role: 'player'
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440005',
+            username: 'eve_indie',
+            display_name: 'Eve Martinez',
+            avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
+            profile_level: 5,
+            bio: 'Solo indie developer creating atmospheric puzzle games.',
+            location: 'Montreal, Canada',
+            role: 'developer'
+          }
+        ];
+
+        const filtered = allUsers.filter(u =>
+          u.username.toLowerCase().includes(query.toLowerCase()) ||
+          u.display_name.toLowerCase().includes(query.toLowerCase()) ||
+          u.bio.toLowerCase().includes(query.toLowerCase())
+        );
+
+        setUserSearchResults(filtered);
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      setUserSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchUsers(userSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [userSearchQuery, user]);
 
   const renderLibraryView = () => {
+    // Require login for library
+    if (!user) {
+      return (
+        <section className="view active">
+          <div className="container-block">
+            <div className="login-required">
+              <Library size={64} />
+              <h2>Sign In Required</h2>
+              <p>You need to sign in to view your game library</p>
+              <button
+                className="auth-submit"
+                onClick={() => setShowAuthModal(true)}
+              >
+                Sign In to Continue
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
 
     const formatPlaytime = (minutes) => {
       const hours = Math.floor(minutes / 60);
@@ -583,6 +846,26 @@ const App: React.FC = () => {
   };
 
   const renderDownloadsView = () => {
+    // Require login for downloads
+    if (!user) {
+      return (
+        <section className="view active">
+          <div className="container-block">
+            <div className="login-required">
+              <Download size={64} />
+              <h2>Sign In Required</h2>
+              <p>You need to sign in to view your downloads</p>
+              <button
+                className="auth-submit"
+                onClick={() => setShowAuthModal(true)}
+              >
+                Sign In to Continue
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
 
     const handlePause = (id: string) => {
       setDownloads(prev => prev.map(download =>
@@ -703,6 +986,26 @@ const App: React.FC = () => {
   );
 
   const renderFriendsView = () => {
+    // Require login for friends
+    if (!user) {
+      return (
+        <section className="view active">
+          <div className="container-block">
+            <div className="login-required">
+              <Users size={64} />
+              <h2>Sign In Required</h2>
+              <p>You need to sign in to view your friends and community</p>
+              <button
+                className="auth-submit"
+                onClick={() => setShowAuthModal(true)}
+              >
+                Sign In to Continue
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
 
     const handleAddFriend = (userId: string) => {
       const user = suggestedFriends.find(f => f.id === userId);
@@ -761,7 +1064,8 @@ const App: React.FC = () => {
             {[
               { id: 'friends', label: 'Friends', count: friends.length },
               { id: 'requests', label: 'Requests', count: friendRequests.length },
-              { id: 'suggested', label: 'Suggested', count: suggestedFriends.length }
+              { id: 'suggested', label: 'Suggested', count: suggestedFriends.length },
+              { id: 'search', label: 'Search', count: 0 }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -910,20 +1214,323 @@ const App: React.FC = () => {
                 )}
               </div>
             )}
+
+            {friendsActiveTab === 'search' && (
+              <div className="search-users">
+                <div className="search-header">
+                  <h3>Find Gamers & Developers</h3>
+                  <p>Search for users by username, name, or interests</p>
+                </div>
+
+                <div className="search-input-container">
+                  <Search size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search users... (try 'alice', 'developer', 'indie')"
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                  {isSearching && <div className="search-spinner">⏳</div>}
+                </div>
+
+                <div className="search-results">
+                  {userSearchQuery.trim() === '' ? (
+                    <div className="search-empty">
+                      <Search size={48} />
+                      <h3>Search for Users</h3>
+                      <p>Enter a username, name, or keyword to find other gamers and developers</p>
+                      <div className="search-tips">
+                        <h4>Search Tips:</h4>
+                        <ul>
+                          <li>Try searching for "alice" or "bob"</li>
+                          <li>Search by role: "developer", "publisher"</li>
+                          <li>Look for interests: "indie", "bitcoin", "games"</li>
+                        </ul>
+                      </div>
+                    </div>
+                  ) : userSearchResults.length === 0 && !isSearching ? (
+                    <div className="search-empty">
+                      <Search size={48} />
+                      <h3>No Users Found</h3>
+                      <p>No users match your search for "{userSearchQuery}"</p>
+                      <p>Try different keywords or check the spelling</p>
+                    </div>
+                  ) : (
+                    <div className="search-results-list">
+                      {userSearchResults.map(user => (
+                        <div key={user.id} className="search-result-card">
+                          <div className="result-avatar">
+                            <img src={user.avatar_url} alt={user.display_name} />
+                          </div>
+                          <div className="result-info">
+                            <div className="result-name">
+                              <h4>{user.display_name}</h4>
+                              <span className="username">@{user.username}</span>
+                              <span className={`role-badge ${user.role}`}>{user.role}</span>
+                            </div>
+                            <div className="result-details">
+                              <span className="level">Level {user.profile_level}</span>
+                              <span className="location">{user.location}</span>
+                            </div>
+                            <p className="result-bio">{user.bio}</p>
+                          </div>
+                          <div className="result-actions">
+                            <button
+                              className="add-friend-btn"
+                              onClick={() => handleAddFriend(user.id)}
+                            >
+                              <User size={16} />
+                              Add Friend
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
     );
   };
 
-  const renderSettingsView = () => (
-    <section className="view active">
-      <div className="container-block">
-        <h2>Settings</h2>
-        <p>Customize your gaming experience</p>
-      </div>
-    </section>
-  );
+  const renderSettingsView = () => {
+    if (!user) {
+      return (
+        <section className="view active">
+          <div className="container-block">
+            <div className="login-required">
+              <Settings size={64} />
+              <h2>Sign In Required</h2>
+              <p>You need to sign in to access settings</p>
+              <button
+                className="auth-submit"
+                onClick={() => setShowAuthModal(true)}
+              >
+                Sign In to Continue
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="view active">
+        <div className="container-block">
+          <div className="settings-header">
+            <h2>Settings</h2>
+            <p>Customize your gaming and development experience</p>
+          </div>
+
+          <div className="settings-sections">
+            <div className="settings-section">
+              <h3>Account & Profile</h3>
+              <div className="settings-group">
+                <div className="setting-item">
+                  <label>Display Name</label>
+                  <input type="text" value={user.displayName} readOnly />
+                </div>
+                <div className="setting-item">
+                  <label>Username</label>
+                  <input type="text" value={user.username} readOnly />
+                </div>
+                <div className="setting-item">
+                  <label>Email</label>
+                  <input type="email" value={user.email} readOnly />
+                </div>
+                <div className="setting-item">
+                  <label>Account Type</label>
+                  <span className={`role-badge ${user.role}`}>{user.role}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="settings-section">
+              <h3>Privacy & Social</h3>
+              <div className="settings-group">
+                <div className="setting-item checkbox">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    Show online status to friends
+                  </label>
+                </div>
+                <div className="setting-item checkbox">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    Show game activity to friends
+                  </label>
+                </div>
+                <div className="setting-item checkbox">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    Allow friend requests from anyone
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="settings-section">
+              <h3>Notifications</h3>
+              <div className="settings-group">
+                <div className="setting-item checkbox">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    Email notifications for game updates
+                  </label>
+                </div>
+                <div className="setting-item checkbox">
+                  <label>
+                    <input type="checkbox" defaultChecked />
+                    Friend activity notifications
+                  </label>
+                </div>
+                <div className="setting-item checkbox">
+                  <label>
+                    <input type="checkbox" />
+                    Promotional emails
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {user.role === 'developer' && (
+              <div className="settings-section developer-section">
+                <h3>Developer Settings</h3>
+                <div className="settings-group">
+                  <div className="setting-item">
+                    <label>Bitcoin Payout Address</label>
+                    <input type="text" placeholder="Enter your Bitcoin address for revenue payouts" />
+                    <small>Revenue share: 85% (15% platform fee)</small>
+                  </div>
+                  <div className="setting-item">
+                    <label>Lightning Address</label>
+                    <input type="text" placeholder="your@lightning.address" />
+                    <small>For instant micropayments and tips</small>
+                  </div>
+                  <div className="setting-item">
+                    <label>Developer Status</label>
+                    <span className="verified-badge">✓ Verified Developer</span>
+                    <small>$100 verification fee paid</small>
+                  </div>
+                </div>
+
+                <div className="developer-resources">
+                  <h4>Developer Resources</h4>
+                  <div className="resource-links">
+                    <a href="#" className="resource-link">
+                      📊 Analytics Dashboard
+                    </a>
+                    <a href="#" className="resource-link">
+                      💰 Revenue Reports
+                    </a>
+                    <a href="#" className="resource-link">
+                      🔑 Game Key Management
+                    </a>
+                    <a href="#" className="resource-link">
+                      📈 Marketing Tools
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="settings-section">
+              <h3>Preferences</h3>
+              <div className="settings-group">
+                <div className="setting-item">
+                  <label>Language</label>
+                  <select defaultValue="en">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                  </select>
+                </div>
+                <div className="setting-item">
+                  <label>Currency</label>
+                  <select defaultValue="usd">
+                    <option value="usd">USD ($)</option>
+                    <option value="btc">Bitcoin (₿)</option>
+                    <option value="sats">Satoshis (sats)</option>
+                  </select>
+                </div>
+                <div className="setting-item">
+                  <label>Theme</label>
+                  <select
+                    value={theme}
+                    onChange={(e) => toggleTheme(e.target.value)}
+                  >
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Developer Section */}
+          <div className="settings-section">
+            <h3>🎮 Developer Options</h3>
+            <div className="developer-info">
+              <div className="developer-benefits">
+                <h4>💰 Earn Bitcoin from Your Games</h4>
+                <ul>
+                  <li>⚡ <strong>Instant Bitcoin payouts</strong> - No 30-60 day delays</li>
+                  <li>💎 <strong>70% revenue share</strong> - Keep more of your earnings</li>
+                  <li>🌍 <strong>Global reach</strong> - Sell to anyone with Bitcoin</li>
+                  <li>💸 <strong>Lower fees</strong> - $20 vs Steam's $100</li>
+                </ul>
+              </div>
+
+              {user?.account_type === 'developer' || user?.accountType === 'developer' ? (
+                <div className="developer-status">
+                  <p>✅ <strong>Developer Account Active</strong></p>
+                  <div className="developer-actions">
+                    <button
+                      className="btn-primary"
+                      onClick={() => setShowGamePublishing(true)}
+                    >
+                      <Plus size={16} />
+                      Publish New Game
+                    </button>
+                    <button className="btn-secondary">
+                      Manage Games
+                    </button>
+                    <button className="btn-secondary">
+                      View Analytics
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="developer-apply">
+                  <p>Ready to start earning Bitcoin from your games?</p>
+                  <button
+                    className="btn-primary developer-apply-btn"
+                    onClick={() => setShowDeveloperOnboarding(true)}
+                  >
+                    <Bitcoin size={16} />
+                    Apply to Become a Developer
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="settings-actions">
+            <button className="save-btn">Save Changes</button>
+            <button className="logout-btn" onClick={handleLogout}>
+              <LogOut size={16} />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const renderCurrentView = () => {
     switch (activeView) {
@@ -990,22 +1597,40 @@ const App: React.FC = () => {
           <button className="iconbtn">
             <Bell size={16} />
           </button>
-          {user ? (
-            <div className="user-menu">
-              <button className="iconbtn user-btn">
-                <User size={16} />
-                <span>{user.username || user.displayName}</span>
-              </button>
-              <div className="user-dropdown">
-                <button onClick={handleLogout}>Sign Out</button>
-              </div>
-            </div>
-          ) : (
-            <button className="iconbtn auth-btn" onClick={() => setShowAuthModal(true)}>
-              <User size={16} />
-              <span>Sign In</span>
+          <div className="header-actions">
+            <button
+              className="theme-toggle"
+              onClick={() => toggleTheme()}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-          )}
+
+
+
+            {user ? (
+              <div className="user-menu">
+                <div className="user-info">
+                  <div className="user-avatar">
+                    <User size={20} />
+                  </div>
+                  <div className="user-details">
+                    <span className="user-name">{user.displayName}</span>
+                    <span className="user-level">Level {user.profileLevel}</span>
+                  </div>
+                </div>
+                <button className="logout-btn" onClick={handleLogout}>
+                  <LogOut size={16} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            ) : (
+              <button className="iconbtn auth-btn" onClick={() => setShowAuthModal(true)}>
+                <User size={16} />
+                <span>Sign In</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -1019,6 +1644,31 @@ const App: React.FC = () => {
         <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <AuthModal onAuth={handleAuth} onClose={() => setShowAuthModal(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Developer Onboarding Modal */}
+      {showDeveloperOnboarding && (
+        <div className="modal-overlay" onClick={() => setShowDeveloperOnboarding(false)}>
+          <div className="modal-content developer-modal" onClick={(e) => e.stopPropagation()}>
+            <DeveloperOnboarding
+              onComplete={handleDeveloperOnboardingComplete}
+              onCancel={() => setShowDeveloperOnboarding(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Game Publishing Modal */}
+      {showGamePublishing && (
+        <div className="modal-overlay" onClick={() => setShowGamePublishing(false)}>
+          <div className="modal-content game-publishing-modal" onClick={(e) => e.stopPropagation()}>
+            <GamePublishingForm
+              onSubmit={handleGamePublishingSubmit}
+              onCancel={() => setShowGamePublishing(false)}
+              user={user}
+            />
           </div>
         </div>
       )}
@@ -1090,6 +1740,12 @@ const AuthModal: React.FC<{ onAuth: any; onClose: () => void }> = ({ onAuth, onC
 
   const renderLoginForm = () => (
     <form onSubmit={handleSubmit} className="auth-form">
+      <div className="demo-hint">
+        <p><strong>Demo Login:</strong></p>
+        <p>Email: demo@gamer.com</p>
+        <p>Password: password</p>
+      </div>
+
       <input
         type="email"
         placeholder="Email"
