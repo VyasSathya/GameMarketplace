@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GameMarketplace - Bitcoin Gaming Platform</title>
+  <meta name="description" content="Bitcoin-powered gaming marketplace - Buy games with Bitcoin and Lightning Network">
+  <meta name="keywords" content="bitcoin, gaming, marketplace, lightning network, games, btc">
+  <link rel="stylesheet" href="styles.css" />
+  <style>/* Fallback visibility if CSS fails */ .view{display:none !important} .view.active{display:block !important} #view-settings:not(.active){display:none !important}</style>
+</head>
+<body>
+  <header class="topbar glass">
+    <div class="logo">GameMarketplace</div>
+    <nav class="mainnav" aria-label="Primary">
+      <button data-view="store" class="navbtn active">Store</button>
+      <button data-view="library" class="navbtn">Library</button>
+      <button data-view="downloads" class="navbtn">Downloads</button>
+      <button data-view="community" class="navbtn">Community</button>
+      <button data-view="friends" class="navbtn">Friends</button>
+      <button data-view="settings" class="navbtn">Settings</button>
+    </nav>
+    <div class="actions">
+      <input id="search" class="search" placeholder="Search games, DLCs, creators" />
+      <button id="wishlistBtn" class="iconbtn" aria-label="Wishlist">♥ <span id="wishlistCount" class="badge">0</span></button>
+      <button id="cartBtn" class="iconbtn" aria-label="Cart">🛒 <span id="cartCount" class="badge">0</span></button>
+      <button id="notificationsBtn" class="iconbtn" aria-label="Notifications">🔔</button>
+      <button id="profileBtn" class="iconbtn" aria-label="Profile">👤</button>
+    </div>
+  </header>
+
+  <main id="app" class="app">
+    <!-- Store -->
+    <section id="view-store" class="view active" aria-label="Store">
+      <div class="container-block">
+        <div class="store-hero">
+        <div class="carousel" id="storeCarousel" aria-roledescription="carousel">
+          <div class="carousel-track" id="carouselTrack"></div>
+          <button class="carousel-prev" id="carouselPrev" aria-label="Previous">‹</button>
+          <button class="carousel-next" id="carouselNext" aria-label="Next">›</button>
+        </div>
+        <div class="store-quick">
+          <button data-storetab="featured" class="pill active">Featured</button>
+          <button data-storetab="new" class="pill">New & Trending</button>
+          <button data-storetab="topsellers" class="pill">Top Sellers</button>
+          <button data-storetab="specials" class="pill">Specials</button>
+          <button data-storetab="queue" class="pill">Your Queue</button>
+        </div>
+        </div>
+        <div class="store-filters">
+          <div class="left">
+            <label>Sort <select id="storeSort"><option value="featured">Featured</option><option value="new">New & Trending</option><option value="topsellers">Top Sellers</option><option value="specials">Specials</option><option value="queue">Your Queue</option></select></label>
+            <label>Genre <select id="storeGenre"><option>All</option><option>RPG</option><option>Action</option><option>Sim</option><option>Indie</option></select></label>
+          </div>
+          <div class="right">
+            <label>Price <select id="storePrice"><option>All</option><option>Under $10</option><option>$10–$20</option><option>$20+</option></select></label>
+          </div>
+        </div>
+      </div>
+      <div class="container-block">
+        <div class="section-title"><div id="storeSectionTitle" class="page-title">Featured</div><button class="pill" id="seeAllBtn">See all</button></div>
+        <div id="storeGrid" class="cardgrid"></div>
+      </div>
+    </section>
+
+    <!-- Library -->
+    <section id="view-library" class="view" aria-label="Library" hidden>
+      <div class="library-layout">
+        <aside class="library-sidebar">
+          <div class="lib-header">
+            <h3>Library</h3>
+            <div class="lib-stats"><span id="libGameCount">0</span> games</div>
+          </div>
+          <div class="lib-search">
+            <input id="libSearch" placeholder="Search library..." />
+          </div>
+          <div class="lib-filters">
+            <select id="libSort">
+              <option value="recent">Recently Played</option>
+              <option value="name">Name A–Z</option>
+              <option value="hours">Hours Played</option>
+              <option value="achievements">Achievement %</option>
+            </select>
+            <div class="filter-tabs">
+              <button class="filter-tab active" data-libfilter="all">All</button>
+              <button class="filter-tab" data-libfilter="installed">Installed</button>
+              <button class="filter-tab" data-libfilter="updates">Updates</button>
+            </div>
+          </div>
+          <div id="librarySidebar" class="lib-list"></div>
+        </aside>
+        <main class="library-main">
+          <div id="libraryDetails" class="lib-details">
+            <div class="lib-empty">Select a game from your library</div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <!-- Downloads -->
+    <section id="view-downloads" class="view" aria-label="Downloads" hidden>
+      <div class="container-block">
+        <div class="downloads-header glass-card">
+          <div class="downloads-stats">
+            <div>Total: <strong><span id="dlTotalSpeed">0</span> MB/s</strong></div>
+            <div>Speed: <strong>0 MB/s</strong></div>
+            <div>Remaining: <strong>0</strong> items</div>
+          </div>
+          <div class="downloads-controls">
+            <label>Limit: <input id="dlLimit" type="range" min="0" max="100" value="100" /> <span id="dlLimitVal">Unlimited</span></label>
+            <label>Region: <select id="dlRegion"><option>US-West</option><option>US-East</option><option>EU</option><option>APAC</option></select></label>
+          </div>
+        </div>
+      </div>
+      <div class="container-block">
+        <div id="downloadQueue" class="queue"></div>
+      </div>
+    </section>
+
+    <!-- Community -->
+    <section id="view-community" class="view" aria-label="Community" hidden>
+      <div class="container-block">
+        <div class="section-title">
+          <h2>Community Hub</h2>
+          <div class="community-tabs">
+            <button class="tab active" data-comtab="discussions">Discussions</button>
+            <button class="tab" data-comtab="workshop">Workshop</button>
+            <button class="tab" data-comtab="guides">Guides</button>
+            <button class="tab" data-comtab="screenshots">Screenshots</button>
+          </div>
+        </div>
+        <div id="communityContent" class="community-content"></div>
+      </div>
+    </section>
+
+    <!-- Friends / Chat -->
+    <section id="view-friends" class="view" aria-label="Friends & Chat" hidden>
+      <div class="friends-layout">
+        <aside class="friends-sidebar">
+          <div class="friends-header">
+            <h3>Friends</h3>
+            <div class="friends-status">
+              <span id="onlineFriendsCount">0</span> online
+            </div>
+          </div>
+          <div class="friends-search">
+            <input placeholder="Search friends..." />
+          </div>
+          <div id="friendsList" class="friends-list"></div>
+        </aside>
+        <main class="chat-main">
+          <div id="chatTabs" class="chat-tabs"></div>
+          <div id="chatContent" class="chat-content">
+            <div class="chat-empty">Select a friend to start chatting</div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="view" aria-label="Settings" hidden>
+      <div class="settings-layout">
+        <aside class="settings-nav">
+          <h3>Settings</h3>
+          <div class="settings-categories">
+            <button class="snav active" data-settings="general">General</button>
+            <button class="snav" data-settings="downloads">Downloads</button>
+            <button class="snav" data-settings="interface">Interface</button>
+            <button class="snav" data-settings="ingame">In-Game</button>
+            <button class="snav" data-settings="controller">Controller</button>
+            <button class="snav" data-settings="cloud">Cloud</button>
+            <button class="snav" data-settings="family">Family</button>
+            <button class="snav" data-settings="account">Account</button>
+          </div>
+        </aside>
+        <main class="settings-main">
+          <div id="settingsContent" class="settings-content"></div>
+        </main>
+      </div>
+    </section>
+  </main>
+
+  <!-- Drawers & Modals -->
+  <aside id="cartDrawer" class="drawer" aria-label="Cart" aria-hidden="true">
+    <header><h3>Cart</h3><button class="close" data-close="cartDrawer">✕</button></header>
+    <div id="cartItems" class="drawer-body"></div>
+    <footer><button id="checkoutBtn" class="primary">Checkout</button></footer>
+  </aside>
+
+  <aside id="wishlistDrawer" class="drawer" aria-label="Wishlist" aria-hidden="true">
+    <header><h3>Wishlist</h3><button class="close" data-close="wishlistDrawer">✕</button></header>
+    <div id="wishlistItems" class="drawer-body"></div>
+  </aside>
+
+  <div id="gameModal" class="modal" aria-hidden="true" role="dialog" aria-label="Game details">
+    <div class="modal-content">
+      <header>
+        <h3 id="gmTitle"></h3>
+        <button class="close" data-close="gameModal">✕</button>
+      </header>
+      <div class="gm-body">
+        <div class="gm-media">
+          <div id="gmMediaThumbs" class="thumbs"></div>
+          <div id="gmMediaViewer" class="viewer"></div>
+        </div>
+        <div class="gm-info">
+          <div class="meta"><span id="gmDeveloper"></span> • <span id="gmRating"></span></div>
+          <p id="gmDescription"></p>
+          <div class="gm-actions">
+            <div class="price" id="gmPrice"></div>
+            <button id="gmBuy" class="primary">Buy</button>
+            <button id="gmAddToCart">Add to Cart</button>
+            <button id="gmWishlist">Wishlist</button>
+          </div>
+          <div class="dlc" id="gmDLC"></div>
+          <div class="related" id="gmRelated"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mediaModal" class="modal" aria-hidden="true" role="dialog" aria-label="Media viewer">
+    <div class="modal-content media-view">
+      <button class="close" data-close="mediaModal">✕</button>
+      <div id="fullMedia" class="full-media"></div>
+    </div>
+  </div>
+  <!-- Bottom Downloads Tray (outside modals) -->
+  <div id="downloadsTray" class="downloads-tray glass" style="display:none">
+    <div>⬇️ Active Downloads <span id="trayCount" class="small"></span></div>
+    <div class="dl-progress"><span id="trayProgress"></span></div>
+    <div style="justify-self:end;display:flex;gap:8px"><button class="close" onclick="setView('downloads')">Open</button><button class="close" onclick="(window.q||document.querySelector).call(null,'#downloadsTray').style.display='none'">Hide</button></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+

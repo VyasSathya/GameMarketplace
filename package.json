@@ -1,0 +1,40 @@
+{
+  "name": "gamemarketplace",
+  "version": "1.0.0",
+  "description": "Bitcoin-powered gaming marketplace platform",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/start-dev.js",
+    "dev:web": "pnpm --filter web run dev",
+    "dev:backend": "pnpm --filter backend run dev",
+    "dev:bitcoin": "pnpm --filter bitcoin run dev",
+    "build": "pnpm run build --recursive",
+    "build:production": "pnpm run build --filter=shared --filter=ui --filter=web --filter=backend",
+    "clean": "pnpm run clean --recursive",
+    "test": "pnpm run test --recursive",
+    "test:watch": "pnpm run test:watch --recursive",
+    "lint": "pnpm run lint --recursive",
+    "type-check": "pnpm run type-check --recursive",
+    "bitcoin:testnet": "nigiri start",
+    "bitcoin:stop": "nigiri stop",
+    "bitcoin:faucet": "nigiri faucet",
+    "bitcoin:logs": "nigiri logs bitcoin"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "prettier": "^3.0.0",
+    "concurrently": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

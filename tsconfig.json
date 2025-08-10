@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@gamemarketplace/shared": ["./packages/shared/src"],
+      "@gamemarketplace/shared/*": ["./packages/shared/src/*"],
+      "@gamemarketplace/ui": ["./packages/ui/src"],
+      "@gamemarketplace/ui/*": ["./packages/ui/src/*"],
+      "@gamemarketplace/bitcoin": ["./packages/bitcoin/src"],
+      "@gamemarketplace/bitcoin/*": ["./packages/bitcoin/src/*"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*",
+    "packages/*/types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build"
+  ],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/bitcoin" },
+    { "path": "./packages/backend" }
+  ]
+}
