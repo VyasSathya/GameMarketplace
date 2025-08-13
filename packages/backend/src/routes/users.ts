@@ -39,6 +39,39 @@ router.get('/stats', asyncHandler(async (req, res) => {
  * Get user's friends list
  */
 router.get('/friends', asyncHandler(async (req, res) => {
+  // Handle mock user in development
+  if (process.env.NODE_ENV === 'development' && req.user!.id === '1') {
+    const mockFriends = [
+      {
+        id: 'friend-1',
+        status: 'accepted',
+        created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+        accepted_at: new Date(Date.now() - 86400000).toISOString(),
+        friend: {
+          id: 'user-2',
+          username: 'alice_gamer',
+          display_name: 'Alice Cooper',
+          avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100',
+          status: 'online'
+        }
+      },
+      {
+        id: 'friend-2',
+        status: 'accepted',
+        created_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+        accepted_at: new Date(Date.now() - 172800000).toISOString(),
+        friend: {
+          id: 'user-3',
+          username: 'bob_builder',
+          display_name: 'Bob Builder',
+          avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+          status: 'offline'
+        }
+      }
+    ];
+    return res.json({ friends: mockFriends });
+  }
+
   const { data: friends, error } = await supabaseClient
     .from('friends')
     .select(`

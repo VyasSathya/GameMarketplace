@@ -212,6 +212,44 @@ router.post('/refresh', asyncHandler(async (req, res) => {
  * Get current user profile
  */
 router.get('/me', authMiddleware, asyncHandler(async (req, res) => {
+  // Handle mock user in development
+  if (process.env.NODE_ENV === 'development' && req.user!.id === '1') {
+    return res.json({
+      user: {
+        id: '1',
+        email: 'demo@gamer.com',
+        username: 'demo_gamer',
+        display_name: 'Demo Gamer',
+        avatar_url: null,
+        role: 'player',
+        status: 'online',
+        bio: 'Demo user for development',
+        location: null,
+        website: null,
+        bitcoin_address: null,
+        lightning_address: null,
+        theme: 'dark',
+        language: 'en',
+        currency: 'USD',
+        notifications_email: true,
+        notifications_push: true,
+        notifications_game_updates: true,
+        notifications_friend_activity: true,
+        notifications_promotions: false,
+        privacy_show_online_status: true,
+        privacy_show_game_activity: true,
+        privacy_allow_friend_requests: true,
+        games_owned: 5,
+        total_hours_played: 120,
+        achievements_unlocked: 25,
+        friends_count: 3,
+        reviews_written: 2,
+        created_at: new Date().toISOString(),
+        last_login_at: new Date().toISOString()
+      }
+    });
+  }
+
   const { data: profile, error } = await supabaseClient
     .from('users')
     .select(`

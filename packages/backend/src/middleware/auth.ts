@@ -23,7 +23,7 @@ declare global {
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -32,10 +32,23 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
+
+    // Handle mock tokens in development
+    if (process.env.NODE_ENV === 'development' && token.startsWith('mock_jwt_token')) {
+      // Create mock user for development
+      req.user = {
+        id: '1',
+        email: 'demo@gamer.com',
+        role: 'player',
+        aud: 'authenticated',
+        exp: Date.now() + 3600000 // 1 hour from now
+      };
+      return next();
+    }
+
     // Verify token with Supabase
     const { data: { user }, error } = await supabaseClient.auth.getUser(token);
-    
+
     if (error || !user) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -108,15 +121,27 @@ export function requireRole(roles: string | string[]) {
 export async function optionalAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return next(); // No token, continue without user
     }
 
     const token = authHeader.substring(7);
-    
+
+    // Handle mock tokens in development
+    if (process.env.NODE_ENV === 'development' && token.startsWith('mock_jwt_token')) {
+      req.user = {
+        id: '1',
+        email: 'demo@gamer.com',
+        role: 'player',
+        aud: 'authenticated',
+        exp: Date.now() + 3600000
+      };
+      return next();
+    }
+
     const { data: { user }, error } = await supabaseClient.auth.getUser(token);
-    
+
     if (!error && user) {
       const { data: profile } = await supabaseClient
         .from('users')

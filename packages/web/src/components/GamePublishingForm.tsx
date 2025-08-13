@@ -293,11 +293,7 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
 
         {currentStep === 2 && (
           <div className="step-content">
-            <h2>🏢 Developer & Publisher Information</h2>
-
-            <div className="company-info">
-              <p>This information appears on your game's store page and helps players know who made the game.</p>
-            </div>
+            <h2>🏢 Developer & Publisher</h2>
 
             <div className="form-group">
               <label>Developer *</label>
@@ -312,7 +308,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                 ))}
               </select>
               {errors.developerCompanyId && <span className="error-message">{errors.developerCompanyId}</span>}
-              <small>The individual or company that created the game</small>
             </div>
 
             <div className="form-group">
@@ -321,12 +316,11 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                 value={formData.publisherCompanyId}
                 onChange={(e) => updateFormData('publisherCompanyId', e.target.value)}
               >
-                <option value="">Select publisher (or leave blank)</option>
+                <option value="">Same as developer</option>
                 {companies.filter(c => c.type === 'publisher' || c.type === 'both').map(company => (
                   <option key={company.id} value={company.id}>{company.name}</option>
                 ))}
               </select>
-              <small>The company that funded/marketed the game (can be same as developer)</small>
             </div>
 
             <div className="form-group">
@@ -337,22 +331,13 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                 onChange={(e) => updateFormData('franchise', e.target.value)}
                 placeholder="e.g., Call of Duty, Final Fantasy"
               />
-              <small>If this game is part of a series or franchise</small>
-            </div>
-
-            <div className="company-actions">
-              <button type="button" className="btn-secondary">
-                <Plus size={16} />
-                Create New Company
-              </button>
-              <small>Need to add a new developer or publisher? Create a company profile first.</small>
             </div>
           </div>
         )}
 
         {currentStep === 3 && (
           <div className="step-content">
-            <h2>💰 Pricing & Release Information</h2>
+            <h2>💰 Pricing & Release</h2>
 
             <div className="form-group">
               <label>Release Type</label>
@@ -365,7 +350,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                     onChange={(e) => updateFormData('releaseType', e.target.value)}
                   />
                   <span>Full Release</span>
-                  <small>Complete, finished game</small>
                 </label>
                 <label className="radio-option">
                   <input
@@ -375,7 +359,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                     onChange={(e) => updateFormData('releaseType', e.target.value)}
                   />
                   <span>Early Access</span>
-                  <small>Playable but still in development</small>
                 </label>
                 <label className="radio-option">
                   <input
@@ -385,7 +368,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                     onChange={(e) => updateFormData('releaseType', e.target.value)}
                   />
                   <span>Coming Soon</span>
-                  <small>Not yet released, for wishlisting</small>
                 </label>
               </div>
             </div>
@@ -439,7 +421,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                       value={formData.priceBtc}
                       onChange={(e) => updateFormData('priceBtc', parseFloat(e.target.value) || 0)}
                     />
-                    <small>Auto-calculated from USD price</small>
                   </div>
 
                   <div className="form-group">
@@ -450,7 +431,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                       value={formData.priceSats}
                       onChange={(e) => updateFormData('priceSats', parseInt(e.target.value) || 0)}
                     />
-                    <small>Auto-calculated from USD price</small>
                   </div>
                 </div>
               )}
@@ -460,7 +440,7 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
 
         {currentStep === 4 && (
           <div className="step-content">
-            <h2>🎯 Categories & Content Rating</h2>
+            <h2>🎯 Categories & Content</h2>
 
             <div className="form-group">
               <label>Genres * (select up to 3)</label>
@@ -591,11 +571,10 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                 </button>
               </div>
               {errors.headerImage && <span className="error-message">{errors.headerImage}</span>}
-              <small>Main image shown on store page and in search results</small>
             </div>
 
             <div className="form-group">
-              <label>Screenshots * (at least 1, up to 10)</label>
+              <label>Screenshots * (at least 1)</label>
               <div className="screenshots-list">
                 {formData.screenshots.map((screenshot, index) => (
                   <div key={index} className="screenshot-item">
@@ -656,7 +635,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                 onChange={(e) => updateFormData('logo', e.target.value)}
                 placeholder="https://example.com/logo.png"
               />
-              <small>Square logo for use in various contexts</small>
             </div>
 
             <div className="form-group">
@@ -667,7 +645,6 @@ const GamePublishingForm: React.FC<GamePublishingFormProps> = ({ onSubmit, onCan
                 onChange={(e) => updateFormData('fileSize', e.target.value)}
                 placeholder="e.g., 2.5 GB"
               />
-              <small>Approximate download size</small>
             </div>
           </div>
         )}

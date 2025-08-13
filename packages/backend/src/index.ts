@@ -113,7 +113,28 @@ app.get('/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     environment: NODE_ENV,
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env.npm_package_version || '1.0.0',
+    supabase: {
+      configured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
+      url: process.env.SUPABASE_URL ? 'configured' : 'missing'
+    }
+  });
+});
+
+// API status endpoint for debugging
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    environment: NODE_ENV,
+    routes: [
+      '/api/auth/*',
+      '/api/games/*',
+      '/api/users/*',
+      '/api/downloads/*',
+      '/api/friends',
+      '/api/community/*'
+    ]
   });
 });
 
@@ -124,6 +145,13 @@ app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/payments', authMiddleware, paymentRoutes);
 app.use('/api/downloads', authMiddleware, downloadRoutes);
 app.use('/api/community', communityRoutes);
+
+// Add direct friends route for compatibility
+app.use('/api/friends', authMiddleware, (req, res, next) => {
+  // Redirect to users/friends
+  req.url = '/friends';
+  userRoutes(req, res, next);
+});
 
 // Setup WebSocket handlers
 setupWebSocket(io, logger);
